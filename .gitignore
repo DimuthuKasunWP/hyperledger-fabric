@@ -13,3 +13,5 @@
 vendor/
 .vscode
 .gradle
+
+.idea/workspace.xml
