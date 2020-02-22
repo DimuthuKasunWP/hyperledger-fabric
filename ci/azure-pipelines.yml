@@ -1,76 +1,99 @@
-# Copyright the Hyperledger Fabric contributors. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
+#
 
-name: $(SourceBranchName)-$(Date:yyyyMMdd)$(Rev:.rrr)
-trigger: none
-pr:
-- master
-- release-2.*
+trigger:
+  - master
+  - release-1.4
 
 variables:
-  GOPATH: $(Agent.BuildDirectory)/go
-  PATH: $(Agent.BuildDirectory)/go/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-  GOVER: 1.13.4
+  NODE_VER: '12.x'
 
 jobs:
-  - job: VerifyBuild
+  - job: fabcar_go
+    displayName: FabCar (Go)
     pool:
       vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
     steps:
-      - template: install_deps.yml
-      - checkout: self
-        path: 'go/src/github.com/hyperledger/fabric'
-        displayName: Checkout Fabric Code
-      - script: make basic-checks native
-        displayName: Run Basic Checks
-      - script: ./ci/scripts/evaluate_commits.sh
-        name: SetJobTriggers
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-go.yml
 
-  - job: DocBuild
-    condition: eq(dependencies.VerifyBuild.outputs['SetJobTriggers.buildDoc'], 'true')
-    dependsOn: VerifyBuild
+  - job: test_network
+    displayName: Start the test network
     pool:
       vmImage: ubuntu-18.04
-    container:
-      image: n42org/tox:3.4.0
+    dependsOn: []
+    timeoutInMinutes: 60
     steps:
-      - checkout: self
-        path: 'go/src/github.com/hyperledger/fabric'
-        displayName: Checkout Fabric Code
-      - script: tox -edocs
-        displayName: Build Documentation
-      - publish: 'docs/_build/html'
-        displayName: Publish Documentation Artifacts
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: testnetwork.yml
 
-  - job: UnitTests
-    condition: eq(dependencies.VerifyBuild.outputs['SetJobTriggers.runTests'], 'true')
-    dependsOn: VerifyBuild
+  - job: fabcar_java
+    displayName: FabCar (Java)
     pool:
       vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
     steps:
-      - template: install_deps.yml
-      - checkout: self
-        path: 'go/src/github.com/hyperledger/fabric'
-        displayName: Checkout Fabric Code
-      - script: ./ci/scripts/setup_hsm.sh
-        displayName: Install SoftHSM
-      - script: make unit-test
-        displayName: Run Unit Tests
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-java.yml
 
-  - job: IntegrationTests
-    condition: eq(dependencies.VerifyBuild.outputs['SetJobTriggers.runTests'], 'true')
-    dependsOn: VerifyBuild
+  - job: fabcar_javascript
+    displayName: FabCar (JavaScript)
     pool:
       vmImage: ubuntu-18.04
-    strategy:
-      parallel: 5
-    timeoutInMinutes: 90
+    dependsOn: []
+    timeoutInMinutes: 60
     steps:
-      - template: install_deps.yml
-      - checkout: self
-        path: 'go/src/github.com/hyperledger/fabric'
-        displayName: Checkout Fabric Code
-      - script: make integration-test
-        displayName: Run Integration Tests
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-javascript.yml
 
+  - job: fabcar_typescript
+    displayName: FabCar (TypeScript)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: fabcar-typescript.yml
+
+  - job: commercialpaper_javascript
+    displayName: CommercialPaper (JavaScript)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-javascript.yml
+
+  - job: commercialpaper_java
+    displayName: CommercialPaper (Java)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-java.yml
+
+  - job: commercialpaper_go
+    displayName: CommercialPaper (Go)
+    pool:
+      vmImage: ubuntu-18.04
+    dependsOn: []
+    timeoutInMinutes: 60
+    steps:
+      - template: install-deps.yml
+      - template: install-fabric.yml
+      - template: commercialpaper-go.yml
